@@ -2,7 +2,7 @@
 
 #include "ofMain.h"
 #include "ofxGuiExtended.h"
-#include "ofxMasterSlaveControl.h"
+//#include "ofxMasterSlaveControl.h"
 
 class ofApp : public ofBaseApp{
 
@@ -23,15 +23,15 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 		
+
+		const float arm_panel_width=.2, camera_panel_width=.5;
+
 		ofxGui gui;
 
 		ofxGuiPanel* arm_Panel;
 		ofxGuiGroup *arm_FK, *arm_IK;
-		ofParameter<float> FK_x, FK_y, FK_z, IK_x, IK_y, IK_z;
-		ofParameter<int> test;
-		ofxGuiContainer *FK_x_btns, *FK_y_btns, *FK_z_btns, *IK_x_btns, *IK_y_btns, *IK_z_btns;
 		ofParameter<bool> FK_x_up, FK_y_up, FK_z_up, IK_x_up, IK_y_up, IK_z_up, FK_x_down, FK_y_down, FK_z_down, IK_x_down, IK_y_down, IK_z_down;  //meant for the more and less buttons
-		ofxMasterSlaveControl msc;
+		//ofxMasterSlaveControl msc;
 
 		ofxGuiPanel* camera_Panel;
 		ofxGuiContainer *main_Camera, *other_Cameras;

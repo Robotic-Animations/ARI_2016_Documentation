@@ -1,65 +1,52 @@
 #include "ofApp.h"
 
+void slider(const string & name, ofxGuiGroup * panel) {
+	ofParameter<float> fk;
+	ofxGuiContainer *buttons;
+	panel->add(fk.set(name, 50, 0, 360), ofJson({ { "precision",2 } }));//these will access the position of the stepper motors
+	buttons = panel->addContainer("", ofJson({ { "direction","horizontal" } }));//adds buttons to fine tune arm position
+	buttons->add<ofxGuiButton>("Less", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } })); //access panel width
+	buttons->add<ofxGuiButton>("More", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
+}
+
+void draw_image(ofxGuiContainer * panel, const string & name, const float & x, const float & y, ofImage & picture) {
+	panel->add<ofxGuiGraphics>(name, &picture.getTexture(), ofJson({ { "width", ofGetWindowWidth()*x },{ "height", ofGetWindowHeight()*y } }));
+}
+
+float aspect_ratio;
+
 //--------------------------------------------------------------
 void ofApp::setup(){
 
-	float val = 50;
 	ofSetFrameRate(60);
 
-	//arm panel
-	arm_Panel = gui.addPanel("Arm Controls", ofJson({ { "width",ofGetWidth()*.2 } }));//add a panel to the gui
+	arm_Panel = gui.addPanel("Arm Controls", ofJson({ { "width",ofGetWidth()*arm_panel_width } }));//add a panel to the gui
 
 	arm_FK = arm_Panel->addGroup("Forward Kinematics");//a collapsable group of sliders controlling forward kinematics
-	arm_FK->add(FK_x.set("X-Axis", val, 0, 360), ofJson({ {"precision",2} }));//these will access the position of the stepper motors
-	
-	
-	
-	
-	FK_x_btns = arm_FK->addContainer("FK-X", ofJson({ {"direction","horizontal"} }));//adds buttons to fine tune arm position
-	FK_x_btns->add<ofxGuiButton>("Less", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } })); //access panel width
-	FK_x_btns->add<ofxGuiButton>("More", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
-	
-	arm_FK->add(FK_y.set("Y-Axis", 100, 0, 360), ofJson({ { "precision",2 } }));
-	FK_y_btns = arm_FK->addContainer("FK-X", ofJson({ { "direction","horizontal" } }));
-	FK_y_btns->add<ofxGuiButton>("Less", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
-	FK_y_btns->add<ofxGuiButton>("More", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
-
-	arm_FK->add(FK_z.set("Z-Axis", 150, 0, 360), ofJson({ { "precision",2 } }));
-	FK_z_btns = arm_FK->addContainer("FK-X", ofJson({ { "direction","horizontal" } }));
-	FK_z_btns->add<ofxGuiButton>("Less", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
-	FK_z_btns->add<ofxGuiButton>("More", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
+	slider("X-Axis", arm_FK);
+	slider("Y-Axis", arm_FK);
+	slider("Z-Axis", arm_FK);
 
 	arm_IK = arm_Panel->addGroup("Inverse Kinematics");//a collapsible group of sliders controlling inverse kinematics
-	arm_IK->add(IK_x.set("X-Axis", 50, 0, 360), ofJson({ { "precision",2 } }));
-	IK_x_btns = arm_IK->addContainer("FK-X", ofJson({ { "direction","horizontal" } }));
-	IK_x_btns->add<ofxGuiButton>("Less", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
-	IK_x_btns->add<ofxGuiButton>("More", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
-
-	arm_IK->add(IK_y.set("Y-Axis", 100, 0, 360), ofJson({ { "precision",2 } }));
-	IK_y_btns = arm_IK->addContainer("FK-X", ofJson({ { "direction","horizontal" } }));
-	IK_y_btns->add<ofxGuiButton>("Less", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
-	IK_y_btns->add<ofxGuiButton>("More", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
-
-	arm_IK->add(IK_z.set("Z-Axis", 150, 0, 360), ofJson({ { "precision",2 } }));
-	IK_z_btns = arm_IK->addContainer("FK-X", ofJson({ { "direction","horizontal" } }));
-	IK_z_btns->add<ofxGuiButton>("Less", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
-	IK_z_btns->add<ofxGuiButton>("More", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
+	slider("X-Axis", arm_IK);
+	slider("Y-Axis", arm_IK);
+	slider("Z-Axis", arm_IK);
 
 	arm_Panel->addFpsPlotter();
 
-	
-
 	//main camera
-	picture.load("images/Sun.jpg");
-	camera_Panel = gui.addPanel("Cameras", ofJson({ { "width", ofGetWindowWidth()*.5 }}));//do not set the width *and* height
+	picture = ofImage("images/Sun.jpg");
+	aspect_ratio = picture.getHeight() / picture.getWidth();
+	camera_Panel = gui.addPanel("Cameras", ofJson({ { "width", ofGetWindowWidth()*camera_panel_width }, {"height", ofGetWindowWidth()*camera_panel_width*aspect_ratio} }));//do not set the width *and* height, it distorts the aspect ratio of the image
 	camera_Panel->setPosition(arm_Panel->getShape().getTopRight() + ofPoint(20,0));
 
-	main_Camera = camera_Panel->addContainer("Main Camera");
-	other_Cameras = camera_Panel->addContainer("Other Cameras", ofJson({ { "direction","horizontal" } }));
-	main_Camera->add<ofxGuiGraphics>("Camera 1", &picture.getTexture(), ofJson({ { "width", ofGetWindowWidth()*.51 }, { "height", ofGetWindowHeight()*.39 } }));
-	other_Cameras->add<ofxGuiGraphics>("Camera 2", &picture.getTexture(), ofJson({ { "width", ofGetWindowWidth()*.16 }, { "height", ofGetWindowHeight()*.12 } }));
-	other_Cameras->add<ofxGuiGraphics>("Camera 3", &picture.getTexture(), ofJson({ { "width", ofGetWindowWidth()*.16 }, { "height", ofGetWindowHeight()*.12 } }));
-	other_Cameras->add<ofxGuiGraphics>("Depth Camera", &picture.getTexture(), ofJson({ { "width", ofGetWindowWidth()*.16 }, { "height", ofGetWindowHeight()*.12 } }));
+	main_Camera = camera_Panel->addContainer("");
+	draw_image(main_Camera, "Camera 1",  camera_panel_width, camera_panel_width*aspect_ratio, picture);
+
+	other_Cameras = camera_Panel->addContainer("", ofJson({ { "direction","horizontal" } }));
+	draw_image(other_Cameras, "Camera 2", .16, .12, picture);
+	draw_image(other_Cameras, "Camera 3", .16, .12, picture);
+	draw_image(other_Cameras, "Depth Camera", .16, .12, picture);
 
 	//motor feedback
 	motor_Panel = gui.addPanel("Motor Feedback", ofJson({ {"width", ofGetWindowWidth()*.55} }));//make the panel horizontal
@@ -94,23 +81,11 @@ void ofApp::setup(){
 msc.addMaster(control);
 
 control = arm_Panel->add(FK_x.set("slave1", 50, 0, 100));
-msc.addSlave(control);
-
-
-for (int i = 1; i <= 6; i++)
-{
-switch (i)
-{
-string ltr
-}
-FK_x_btns = arm_FK->addContainer("FK-X", ofJson({ { "direction","horizontal" } }));//adds buttons to fine tune arm position
-FK_x_btns->add<ofxGuiButton>("Less", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } })); //access panel width
-FK_x_btns->add<ofxGuiButton>("More", ofJson({ { "type","fullsize" },{ "width",ofGetWidth()*.1 },{ "text-align","center" } }));
-}*/
+msc.addSlave(control);*/
 
 //--------------------------------------------------------------
 void ofApp::update(){
-
+	
 }
 
 //--------------------------------------------------------------
@@ -166,7 +141,14 @@ void ofApp::mouseExited(int x, int y){
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-
+	arm_Panel->setWidth(ofGetWidth()*arm_panel_width);
+	camera_Panel->setWidth(ofGetWidth()*camera_panel_width);
+	camera_Panel->setHeight(ofGetWidth()*camera_panel_width*aspect_ratio*.75);
+	camera_Panel->setPosition(arm_Panel->getShape().getTopRight() + ofPoint(20, 0));
+	main_Camera->setWidth(ofGetWidth()*camera_panel_width);
+	main_Camera->setHeight(ofGetWidth()*camera_panel_width*aspect_ratio*.75);
+	//auto a = main_Camera->children();
+	//a[0]->setAttribute("height", ofGetWindowHeight()*ofGetWidth()*camera_panel_width*aspect_ratio*10000);
 }
 
 //--------------------------------------------------------------
